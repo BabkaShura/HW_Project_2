@@ -24,17 +24,16 @@ def test_load_data_from_json() -> None:
         == "Смартфоны, как средство не только коммуникации, но и получение дополнительных функций для удобства жизни"
     ), "Описание первой категории не совпадает"
 
-    # Проверка товаров в категории
-    assert len(cat.products) > 0, "Должны быть товары в категории"
-    product = cat.products[0]
+    raw_products = cat.product_list  # доступ к публичному списку продуктов
+    assert len(raw_products) > 0, "Должны быть товары в категории"
+
+    product = raw_products[0]
     assert isinstance(product, Product), "Продукты должны быть объектами класса Product"
-    assert (
-        product.name == "Samsung Galaxy C23 Ultra"
-    ), "Название первого продукта должно быть 'Samsung Galaxy C23 Ultra'"
-    assert product.price == 180000.0, "Цена первого продукта должна быть 180000.0"
-    assert product.quantity == 5, "Количество первого продукта должно быть 5"
+    assert product.name == "Samsung Galaxy C23 Ultra"
+    assert product.price == 180000.0
+    assert product.quantity == 5
 
     # Проверяем количество категорий и товаров
-    assert Category.category_count == len(categories), f"Должно быть {Category.category_count} категорий"
-    total_products = sum(len(cat.products) for cat in categories)
-    assert Category.product_count == total_products, f"Должно быть {Category.product_count} товаров"
+    assert Category.category_count == len(categories)
+    total_products = sum(len(cat.product_list) for cat in categories)
+    assert Category.product_count == total_products
