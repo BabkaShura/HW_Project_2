@@ -27,7 +27,7 @@ if __name__ == "__main__":
     for cat in categories:
         print(f"\nКатегория: {cat.name}")
         print(f"Описание: {cat.description}")
-        for product in cat.products:
+        for product in cat.product_list:
             print(f"  - {product.name} ({product.price} руб., {product.quantity} шт.)")
 
     print(f"\nОбщее количество категорий: {Category.category_count}")

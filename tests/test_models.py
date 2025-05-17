@@ -25,7 +25,8 @@ def test_category_initialization(sample_products: list[Product]) -> None:
     cat = Category("Электроника", "Устройства", sample_products)
     assert cat.name == "Электроника"
     assert cat.description == "Устройства"
-    assert cat.products == sample_products
+    assert "Товар 1, 99.99 руб. Остаток: 5 шт." in cat.products
+    assert "Товар 2, 49.5 руб. Остаток: 10 шт." in cat.products
 
 
 def test_category_product_count_reset(monkeypatch: MonkeyPatch, sample_products: list[Product]) -> None:
@@ -38,3 +39,39 @@ def test_category_product_count_reset(monkeypatch: MonkeyPatch, sample_products:
 
     assert Category.category_count == 2
     assert Category.product_count == 3  # 2 товара + 1 товар
+
+
+# Тест для add_product
+def test_add_product(sample_products: list[Product]) -> None:
+    cat = Category("Электроника", "Гаджеты", sample_products[:1])
+    new_product = Product("Товар 3", "Описание 3", 120.0, 7)
+    cat.add_product(new_product)
+    assert "Товар 3, 120.0 руб. Остаток: 7 шт." in cat.products
+
+
+# Тест для Product.new_product: слияние количества и цены
+def test_new_product_merge_quantity() -> None:
+    existing = [Product("Книга", "Роман", 300.0, 5)]
+    data = {"name": "Книга", "description": "Роман", "price": 250.0, "quantity": 2}
+    product = Product.new_product(data, existing)
+    assert product.quantity == 7
+    assert product.price == 300.0  # Более высокая цена остается
+
+
+# Тест для ограничения setter цены и подтверждения
+def test_price_setter_invalid_and_confirm(monkeypatch: MonkeyPatch) -> None:
+    p = Product("Принтер", "Цветной", 200.0, 4)
+
+    # Попытка установить цену <= 0
+    p.price = -10.0
+    assert p.price == 200.0
+
+    # Попытка понизить цену и отказ пользователя
+    monkeypatch.setattr("builtins.input", lambda _: "n")
+    p.price = 150.0
+    assert p.price == 200.0
+
+    # Подтверждение понижения цены
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+    p.price = 150.0
+    assert p.price == 150.0
