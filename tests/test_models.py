@@ -75,3 +75,23 @@ def test_price_setter_invalid_and_confirm(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr("builtins.input", lambda _: "y")
     p.price = 150.0
     assert p.price == 150.0
+
+
+# Тест для __str__ у Product
+def test_product_str() -> None:
+    product = Product("Телефон", "Смартфон", 999.99, 8)
+    assert str(product) == "Телефон, 999.99 руб. Остаток: 8 шт."
+
+
+# Тест для __str__ у Category
+def test_category_str(sample_products: list[Product]) -> None:
+    category = Category("Аксессуары", "Разное", sample_products)
+    assert str(category) == "Аксессуары, количество продуктов: 15 шт."
+
+
+# Тест для __add__ у Product
+def test_product_add() -> None:
+    p1 = Product("Монитор", "Full HD", 300.0, 2)
+    p2 = Product("Клавиатура", "Механическая", 150.0, 3)
+    result = p1 + p2
+    assert result == 300.0 * 2 + 150.0 * 3  # 600 + 450 = 1050
