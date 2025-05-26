@@ -2,7 +2,9 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from src.models import Category
+from src.models import LawnGrass
 from src.models import Product
+from src.models import Smartphone
 
 
 @pytest.fixture
@@ -95,3 +97,38 @@ def test_product_add() -> None:
     p2 = Product("Клавиатура", "Механическая", 150.0, 3)
     result = p1 + p2
     assert result == 300.0 * 2 + 150.0 * 3  # 600 + 450 = 1050
+
+
+# Тест на успешное сложение смартфонов
+def test_smartphone_addition() -> None:
+    s1 = Smartphone("iPhone", "Смартфон", 1000.0, 2, 95.0, "14 Pro", 256, "Серый")
+    s2 = Smartphone("iPhone", "Смартфон", 1000.0, 1, 95.0, "14 Pro", 256, "Серый")
+    result = s1 + s2
+    assert result == 1000.0 * 3
+
+
+# Тест на исключение при сложении разных типов товаров
+def test_product_add_different_types() -> None:
+    s = Smartphone("Samsung", "Смартфон", 800.0, 1, 80.0, "Galaxy S21", 128, "Черный")
+    g = LawnGrass("GreenLife", "Трава", 100.0, 5, "Польша", "2 недели", "Зеленый")
+    import pytest
+
+    with pytest.raises(TypeError):
+        _ = s + g
+
+
+# Тест на успешное добавление LawnGrass в категорию
+def test_add_lawngrass_to_category() -> None:
+    grass = LawnGrass("EcoGrass", "Натуральная", 75.0, 4, "Германия", "10 дней", "Зеленый")
+    category = Category("Сад", "Растения", [])
+    category.add_product(grass)
+    assert "EcoGrass, 75.0 руб. Остаток: 4 шт." in category.products
+
+
+# Тест на запрет добавления не-продукта
+def test_add_invalid_object_to_category() -> None:
+    category = Category("Сад", "Растения", [])
+    import pytest
+
+    with pytest.raises(TypeError):
+        category.add_product("непродукт")  # type: ignore[arg-type]
