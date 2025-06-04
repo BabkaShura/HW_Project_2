@@ -1,13 +1,51 @@
+from abc import ABC
+from abc import abstractmethod
+from typing import Any
 from typing import List
 from typing import Optional
 
 
-class Product:
+class BaseEntity(ABC):
+    def __init__(self, name: str, description: str):
+        self.name = name
+        self.description = description
+
+    @abstractmethod
+    def __str__(self) -> str:
+        pass
+
+
+class BaseProduct(ABC):
     def __init__(self, name: str, description: str, price: float, quantity: int):
         self.name = name
         self.description = description
-        self.__price = price
+        self._price = price
         self.quantity = quantity
+
+    @abstractmethod
+    def __str__(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def price(self) -> float:
+        pass
+
+    @price.setter
+    @abstractmethod
+    def price(self, value: float) -> None:
+        pass
+
+
+class InitPrinterMixin:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        print(f"{self.__class__.__name__} создан с аргументами: {args} {kwargs}")
+        super().__init__(*args, **kwargs)
+
+
+class Product(InitPrinterMixin, BaseProduct):
+    def __init__(self, name: str, description: str, price: float, quantity: int):
+        super().__init__(name, description, price, quantity)
 
     def __str__(self) -> str:
         return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
@@ -19,19 +57,19 @@ class Product:
 
     @property
     def price(self) -> float:
-        return self.__price
+        return self._price
 
     @price.setter
     def price(self, value: float) -> None:
         if value <= 0:
             print("Цена не должна быть нулевая или отрицательная")
             return
-        if value < self.__price:
-            confirm = input(f"Вы уверены, что хотите понизить цену с {self.__price} до {value}? (y/n): ")
+        if value < self._price:
+            confirm = input(f"Вы уверены, что хотите понизить цену с {self._price} до {value}? (y/n): ")
             if confirm.lower() != "y":
                 print("Действие отменено")
                 return
-        self.__price = value
+        self._price = value
 
     @classmethod
     def new_product(cls, data: dict, existing_products: Optional[list["Product"]] = None) -> "Product":
@@ -51,14 +89,13 @@ class Product:
         return cls(name, description, price, quantity)
 
 
-class Category:
+class Category(BaseEntity):
     # Атрибуты класса (общие для всех объектов)
     category_count: int = 0
     product_count: int = 0
 
     def __init__(self, name: str, description: str, products: List[Product]):
-        self.name = name
-        self.description = description
+        super().__init__(name, description)
         self.__products = products
 
         # Увеличиваем общее количество категорий
@@ -141,3 +178,18 @@ class LawnGrass(Product):
         self.country = country
         self.germination_period = germination_period
         self.color = color
+
+
+# Новый класс Order, наследующийся от BaseEntity
+class Order(BaseEntity):
+    def __init__(self, name: str, description: str, product: Product, quantity: int):
+        super().__init__(name, description)
+        if quantity > product.quantity:
+            raise ValueError("Нельзя заказать больше, чем есть в наличии.")
+        self.product = product
+        self.quantity = quantity
+        self.total_price = self.quantity * self.product.price
+        self.product.quantity -= self.quantity
+
+    def __str__(self) -> str:
+        return f"Заказ: {self.name} — {self.product.name} x {self.quantity} = {self.total_price} руб."

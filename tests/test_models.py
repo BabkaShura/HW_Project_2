@@ -1,8 +1,10 @@
 import pytest
+from _pytest.capture import CaptureFixture
 from _pytest.monkeypatch import MonkeyPatch
 
 from src.models import Category
 from src.models import LawnGrass
+from src.models import Order
 from src.models import Product
 from src.models import Smartphone
 
@@ -132,3 +134,71 @@ def test_add_invalid_object_to_category() -> None:
 
     with pytest.raises(TypeError):
         category.add_product("непродукт")  # type: ignore[arg-type]
+
+
+# проверяет корректное создание заказа, расчёт итоговой цены и уменьшение количества товара
+def test_order_creation_and_total_price() -> None:
+    product = Product("Мышка", "Беспроводная", 500.0, 10)
+    order = Order("Заказ на мышку", "Покупка одной мышки", product, 1)
+    assert order.name == "Заказ на мышку"
+    assert order.description == "Покупка одной мышки"
+    assert order.quantity == 1
+    assert order.total_price == 500.0
+    assert product.quantity == 9
+    assert str(order) == "Заказ: Заказ на мышку — Мышка x 1 = 500.0 руб."
+
+
+# проверяет, что попытка заказать больше, чем в наличии, вызывает ошибку
+def test_order_exceeding_quantity_raises_error() -> None:
+    product = Product("Монитор", "4K", 15000.0, 2)
+    import pytest
+
+    with pytest.raises(ValueError):
+        Order("Слишком много", "Пытаемся купить 3", product, 3)
+
+
+# Тест на проверку __repr__ через InitPrinterMixin
+def test_product_repr_print(capsys: CaptureFixture[str]) -> None:
+    Product("Планшет", "Android", 1200.0, 4)
+    captured = capsys.readouterr()
+    assert "Product создан с аргументами" in captured.out
+
+
+# Тест на отрицательное количество в заказе
+def test_order_negative_quantity_error() -> None:
+    product = Product("Кресло", "Офисное", 1500.0, 1)
+    import pytest
+
+    with pytest.raises(ValueError):
+        Order("Ошибка заказа", "Минус товар", product, 5)
+
+
+# Тест на получение и установку корректной цены
+def test_product_price_getter_setter() -> None:
+    p = Product("Часы", "Наручные", 999.0, 1)
+    p.price = 1200.0
+    assert p.price == 1200.0
+
+
+# Тест итерации по категории
+def test_category_iterator(sample_products: list[Product]) -> None:
+    cat = Category("Одежда", "Шапки", sample_products)
+    names = [p.name for p in cat]
+    assert names == ["Товар 1", "Товар 2"]
+
+
+# Тест геттеров LawnGrass
+def test_lawngrass_fields() -> None:
+    grass = LawnGrass("BioGrass", "Экологичная", 85.0, 6, "Италия", "5 дней", "Зеленый")
+    assert grass.country == "Италия"
+    assert grass.germination_period == "5 дней"
+    assert grass.color == "Зеленый"
+
+
+# Тест геттеров Smartphone
+def test_smartphone_fields() -> None:
+    phone = Smartphone("Pixel", "Android", 1100.0, 3, 88.0, "Pixel 6", 128, "Черный")
+    assert phone.efficiency == 88.0
+    assert phone.model == "Pixel 6"
+    assert phone.memory == 128
+    assert phone.color == "Черный"

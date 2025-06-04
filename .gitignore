@@ -36,8 +36,9 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
+.gitignore
 # Unit test / coverage reports
-htmlcov/
+# htmlcov/
 .tox/
 .nox/
 .coverage
