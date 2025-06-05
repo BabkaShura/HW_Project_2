@@ -202,3 +202,106 @@ def test_smartphone_fields() -> None:
     assert phone.model == "Pixel 6"
     assert phone.memory == 128
     assert phone.color == "Черный"
+
+
+def test_product_with_zero_quantity_raises() -> None:
+    import pytest
+    with pytest.raises(ValueError, match="Товар с нулевым количеством не может быть добавлен"):
+        Product("Нулевой", "Без остатков", 999.0, 0)
+
+
+def test_category_middle_price_empty() -> None:
+    category = Category("Пустая", "Нет товаров", [])
+    assert category.middle_price() == 0.0
+
+
+def test_category_middle_price_valid() -> None:
+    p1 = Product("Товар 1", "Тест", 100.0, 1)
+    p2 = Product("Товар 2", "Тест", 200.0, 2)
+    category = Category("Тестовая", "Есть товары", [p1, p2])
+    assert category.middle_price() == 150.0
+
+def test_category_class_counters(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(Category, "product_count", 0)
+    monkeypatch.setattr(Category, "category_count", 0)
+
+    p1 = Product("A", "D", 100, 1)
+    p2 = Product("B", "D", 200, 2)
+    Category("Категория", "Описание", [p1, p2])
+
+    assert Category.product_count == 2
+    assert Category.category_count == 1
+
+
+def test_category_class_counters(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(Category, "product_count", 0)
+    monkeypatch.setattr(Category, "category_count", 0)
+
+    p1 = Product("A", "D", 100, 1)
+    p2 = Product("B", "D", 200, 2)
+    Category("Категория", "Описание", [p1, p2])
+
+    assert Category.product_count == 2
+    assert Category.category_count == 1
+
+
+def test_category_iterator_object() -> None:
+    p = Product("Товар", "Описание", 100.0, 1)
+    category = Category("Категория", "Описание", [p])
+    iterator = iter(category)
+    assert next(iterator).name == "Товар"
+
+
+def test_category_add_product_existing_name() -> None:
+    p1 = Product("Книга", "1", 100.0, 1)
+    p2 = Product("Книга", "2", 200.0, 2)
+    category = Category("Книги", "Описание", [p1])
+    category.add_product(p2)
+    assert category.middle_price() == 150.0
+
+
+def test_product_new_product_new_entry() -> None:
+    existing = [Product("Телевизор", "OLED", 50000, 1)]
+    data = {"name": "Наушники", "description": "BT", "price": 3000, "quantity": 1}
+    new = Product.new_product(data, existing)
+    assert new.name == "Наушники"
+    assert new.quantity == 1
+    existing.append(new)
+    assert len(existing) == 2
+
+
+def test_order_str() -> None:
+    p = Product("Наушники", "Bluetooth", 3000.0, 5)
+    order = Order("Заказ 1", "Покупка", p, 2)
+    assert str(order) == "Заказ: Заказ 1 — Наушники x 2 = 6000.0 руб."
+
+
+def test_category_iterator_stop_iteration() -> None:
+    p = Product("Товар", "Описание", 100.0, 1)
+    cat = Category("Категория", "Описание", [p])
+    iterator = iter(cat)
+    next(iterator)  # первый вызов — ок
+    import pytest
+    with pytest.raises(StopIteration):
+        next(iterator)  # второй вызов — ошибка
+
+
+def test_new_product_without_existing() -> None:
+    data = {"name": "Мышь", "description": "Оптическая", "price": 500.0, "quantity": 1}
+    product = Product.new_product(data)
+    assert isinstance(product, Product)
+    assert product.name == "Мышь"
+    assert product.quantity == 1
+
+
+def test_price_setter_confirm_lower(monkeypatch: MonkeyPatch) -> None:
+    p = Product("Товар", "Описание", 200.0, 1)
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+    p.price = 150.0
+    assert p.price == 150.0
+
+
+def test_price_setter_does_not_change_on_zero() -> None:
+    p = Product("Тест", "Описание", 100.0, 1)
+    p.price = 0.0
+    assert p.price == 100.0
